@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  app:
+    build: ./homework/client-app
+    container_name: app
+    volumes:
+      - ./homework/client-app:/app
+    environment:
+      - name=value
+    ports:
+      - "3000:3000"
+    networks:
+      - my_network
+  
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      - POSTGRES_USER=postgres_user
+      - POSTGRES_PASSWORD=postgres_password
+      - POSTGRES_DB=ozlemgizem
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - my_network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: "rabbitmq"
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - my_network
+
+  db-app:
+    build: ./homework/db-app
+    container_name: db-app
+    volumes:
+      - ./homework/db-app:/app
+    networks:
+      - my_network
+  
+  client:
+    stdin_open: true
+    environment:
+      - CHOKIDAR_USEPOLLING=true #sanırım bu ayar, konteyner içinde çalışan programın kullanıcıdan giriş almasını sağlıyormuş (sorulacak*)
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./client
+    volumes:
+      - /app/node_modules
+      - ./client:/app
+
+volumes:
+  db_data:
+
+networks:
+  my_network:
+    driver: bridge
